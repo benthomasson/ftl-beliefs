@@ -116,10 +116,10 @@ The design draws on classical AI belief maintenance and belief revision literatu
 - **Alchourrón, C., Gärdenfors, P., & Makinson, D. (1985).** "On the Logic of Theory Change: Partial Meet Contraction and Revision Functions." *Journal of Symbolic Logic*, 50(2), 510–530. [doi:10.2307/2274239](https://doi.org/10.2307/2274239)
   The AGM framework for belief revision. Defines contraction (removing a belief with minimal disruption), revision (adding a belief while maintaining consistency), and expansion. The `resolve` command's entrenchment ordering implements AGM's epistemic entrenchment — more entrenched beliefs are harder to retract.
 
-- **Gärdenfors, P. (1988).** *Knowledge in Flux: Modeling the Dynamics of Epistemic States.* MIT Press. [ISBN 978-0-262-07113-2](https://mitpress.mit.edu/9780262571579/knowledge-in-flux/)
+- **Gärdenfors, P. (1988).** *Knowledge in Flux: Modeling the Dynamics of Epistemic States.* MIT Press. [ISBN 978-0-262-07109-3](https://www.amazon.com/dp/0262071096)
   Book-length treatment of AGM theory with epistemic entrenchment ordering. The entrenchment scoring system (`resolve`) — source priority + recency bonus + derivation type — is a practical approximation of Gärdenfors's formal ordering.
 
-- **Forbus, K. & de Kleer, J. (1993).** *Building Problem Solvers.* MIT Press. [ISBN 978-0-262-06157-7](https://mitpress.mit.edu/9780262561105/building-problem-solvers/)
+- **Forbus, K. & de Kleer, J. (1993).** *Building Problem Solvers.* MIT Press. [ISBN 978-0-262-06157-5](https://mitpress.mit.edu/9780262528153/building-problem-solvers/)
   Comprehensive treatment of TMS/ATMS implementation with cross-system dependency tracking. The multi-repository cross-reference checking (`check-refs`, `depends-on`) follows the pattern of inter-system dependency management described here.
 
 - **McCarthy, J. & Hayes, P. (1969).** "Some Philosophical Problems from the Standpoint of Artificial Intelligence." *Machine Intelligence*, 4, 463–502. [PDF](http://www-formal.stanford.edu/jmc/mcchay69.pdf)
