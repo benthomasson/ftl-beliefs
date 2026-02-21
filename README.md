@@ -10,11 +10,19 @@ When multiple LLM agents work across repositories, their beliefs diverge. CLAUDE
 
 ## Install
 
-Clone the repo. No dependencies beyond Python 3.10+ standard library.
+No dependencies beyond Python 3.10+ standard library.
 
 ```bash
-# Add to PATH or symlink
-ln -s ~/git/beliefs/beliefs /usr/local/bin/beliefs
+# Run directly with uvx (no install needed)
+uvx --from git+https://github.com/benthomasson/beliefs beliefs nogoods
+
+# Or install with uv/pip
+uv tool install git+https://github.com/benthomasson/beliefs
+pip install git+https://github.com/benthomasson/beliefs
+
+# Or clone and run directly
+git clone https://github.com/benthomasson/beliefs && cd beliefs
+./beliefs nogoods
 ```
 
 ## Usage
@@ -24,11 +32,11 @@ ln -s ~/git/beliefs/beliefs /usr/local/bin/beliefs
 ```bash
 # Add a claim with source, assumptions, and dependencies
 beliefs add \
-    --id tensor-sector-resolved \
-    --text "Tensor GW modes recovered via SVT decomposition" \
-    --source physics/entries/2025/02/20/tensor-sector.md \
-    --assumes svt-decomposition bi-metric-structure \
-    --depends-on inverse-square-derived \
+    --id auth-uses-jwt \
+    --text "Authentication switched from sessions to JWT tokens" \
+    --source backend/entries/2025/03/15/auth-refactor.md \
+    --assumes stateless-api \
+    --depends-on api-v2-design \
     --type DERIVED
 ```
 
@@ -46,7 +54,7 @@ beliefs check-stale
 
 ```bash
 # Compare entrenchment scores to determine which claim wins
-beliefs resolve gw-polarization-open tensor-sector-resolved
+beliefs resolve old-claim new-claim
 ```
 
 ### Query contradictions
@@ -56,7 +64,7 @@ beliefs resolve gw-polarization-open tensor-sector-resolved
 beliefs nogoods
 
 # Find contradictions affecting a specific claim
-beliefs nogoods --affecting lattice-spacing-4mm
+beliefs nogoods --affecting some-claim-id
 ```
 
 ### Generate context summaries
@@ -93,4 +101,4 @@ beliefs compact --budget 500
 
 ## Origin
 
-Built as a proof-of-concept during a meta-research study on AI-accelerated theoretical physics. The study found that multi-agent LLM systems suffer from belief staleness, circular verification, and cross-repository knowledge gaps — the same problems classical AI addressed with truth maintenance systems in the 1980s. This tool bridges those two worlds.
+Built as a proof-of-concept during a meta-research study on using AI for open-ended research. The study found that multi-agent LLM systems suffer from belief staleness, circular verification, and cross-repository knowledge gaps — the same problems classical AI addressed with truth maintenance systems in the 1980s. This tool bridges those two worlds.

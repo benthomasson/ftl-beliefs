@@ -8,11 +8,13 @@ A CLI tool for tracking claims and contradictions across multi-agent LLM researc
 
 ```
 beliefs/
-├── beliefs              # CLI entry point (argparse, command dispatch)
+├── pyproject.toml       # Package metadata, console_scripts entry point
+├── beliefs              # Standalone CLI entry point (thin wrapper)
 ├── beliefs.md           # Claim registry — the source of truth
 ├── nogoods.md           # Contradiction database — append-only
-└── beliefs_lib/         # Package
+└── beliefs_lib/         # Package (installed by pip/uv)
     ├── __init__.py      # Claim and Nogood dataclasses
+    ├── cli.py           # argparse CLI and command dispatch (entry point for uvx)
     ├── parser.py        # Markdown parse/serialize for both data files
     ├── check_refs.py    # Cross-reference verification (source exists, keywords match)
     ├── check_stale.py   # Staleness detection (newer entries contradict IN claims)
@@ -20,6 +22,8 @@ beliefs/
     ├── nogoods_cmd.py   # Nogood listing, filtering, ID generation
     └── compact.py       # Token-budgeted context summary generation
 ```
+
+Two ways to run: `./beliefs` (standalone script, uses script-relative sys.path) or `beliefs` after install via `uvx`/`uv tool install`/`pip install` (uses `beliefs_lib.cli:main` entry point). Both resolve `beliefs.md` and `nogoods.md` from the current working directory.
 
 ## Commands
 
@@ -51,7 +55,7 @@ Claim text on one line
 - Depends on: other-claim-id
 ```
 
-The `## Repos` section maps repo names to paths (e.g., `- physics: ~/git/physics`). The parser uses these to resolve `Source:` paths to absolute filesystem paths.
+The `## Repos` section maps repo names to paths (e.g., `- myproject: ~/git/myproject`). The parser uses these to resolve `Source:` paths to absolute filesystem paths.
 
 ## Key Algorithms
 
