@@ -1,7 +1,7 @@
 ---
 name: beliefs
 description: Manage the belief registry — track claims, detect staleness, resolve conflicts, query contradictions
-argument-hint: "[check-refs|check-stale|add|resolve|nogoods|compact|status] [args...]"
+argument-hint: "[check-refs|check-stale|add|resolve|nogoods|compact|list|show|update|hash-sources|status] [args...]"
 allowed-tools: Bash(beliefs *), Bash(./beliefs *), Bash(uvx *beliefs*), Read, Grep, Glob
 ---
 
@@ -48,8 +48,22 @@ Run `beliefs resolve CLAIM_A CLAIM_B`. Explain the entrenchment scores and the r
 ### `nogoods`
 Run `beliefs nogoods` with any provided flags (e.g., `--affecting CLAIM_ID`). Summarize the results.
 
+### `list`
+Run `beliefs list` with optional `--status IN|OUT|STALE` filter. Present the results as a quick summary.
+
+### `show`
+Run `beliefs show CLAIM_ID`. Present the full claim detail.
+
+### `update`
+Run `beliefs update CLAIM_ID` with provided flags. Supports `--status`, `--stale-reason`, `--superseded-by`, `--add-assumes`, `--add-depends-on`. If the user gives natural language, convert to flags.
+
 ### `compact`
-Run `beliefs compact` with any provided flags (e.g., `--budget N`). Output the summary directly.
+Run `beliefs compact` with any provided flags (e.g., `--budget N`, `--no-truncate`). Output the summary directly.
+
+### `hash-sources`
+Run `beliefs hash-sources`. This backfills SHA-256 content hashes for all claims that have a source file but no stored hash. Use `--force` to re-hash claims that already have a hash (e.g., after confirming a source change is expected and re-registering).
+
+After hashing, `check-stale` will detect when source files change, flagging claims whose source content has diverged from what was recorded at registration time.
 
 ## After Any Command
 
