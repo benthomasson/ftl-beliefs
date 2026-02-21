@@ -156,14 +156,25 @@ def update_claim_status(path: Path, claim_id: str, new_status: str, **extra) -> 
             i += 1
 
             # Copy existing claim body until next header
+            body_lines = []
             while i < len(lines) and not HEADER_RE.match(lines[i]):
-                result.append(lines[i])
+                body_lines.append(lines[i])
                 i += 1
+
+            # Strip trailing blank lines so extra metadata stays attached
+            trailing = []
+            while body_lines and not body_lines[-1].strip():
+                trailing.append(body_lines.pop())
+
+            result.extend(body_lines)
 
             # Append extra metadata
             for key, val in extra.items():
                 display_key = key.replace("_", " ").title()
                 result.append(f"- {display_key}: {val}")
+
+            # Restore trailing blank lines
+            result.extend(trailing)
         else:
             result.append(lines[i])
             i += 1
