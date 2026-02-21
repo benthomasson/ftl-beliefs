@@ -99,6 +99,18 @@ beliefs compact --budget 500
 - **Nogoods are append-only.** Contradictions survive context compaction and session boundaries.
 - **Zero dependencies.** Python 3.10+ standard library only. No LLM calls, no database, no server.
 
+## Claude Code Skill
+
+The repo includes a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill at `.claude/skills/beliefs/SKILL.md` that lets AI agents use the beliefs system via natural language. When the skill is loaded, an agent can:
+
+- Run `/beliefs status` to get a full registry health check (check-refs + check-stale + compact)
+- Run `/beliefs add <natural language description>` and have it converted to the right CLI flags
+- Run `/beliefs show`, `/beliefs list`, `/beliefs update` with natural language arguments
+
+The skill handles CLI discovery (installed binary → local script → uvx fallback) and interprets results — suggesting fixes for FAIL/WARN/STALE findings rather than just printing raw output.
+
+To use it, copy the `.claude/skills/beliefs/` directory into your project's `.claude/skills/` or install beliefs in a repo that already has Claude Code configured.
+
 ## Origin
 
 Built as a proof-of-concept during a meta-research study on using AI for open-ended research. The study found that multi-agent LLM systems suffer from belief staleness, circular verification, and cross-repository knowledge gaps — the same problems classical AI addressed with truth maintenance systems in the 1980s. This tool bridges those two worlds.
