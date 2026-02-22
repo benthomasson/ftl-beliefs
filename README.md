@@ -2,6 +2,21 @@
 
 A CLI tool for tracking claims and contradictions across multi-agent LLM research systems.
 
+## Quick Start
+
+```bash
+uv tool install git+https://github.com/benthomasson/beliefs
+cd ~/git/my-repo
+beliefs install-skill
+claude
+```
+
+Then inside Claude Code:
+
+```
+/beliefs init
+```
+
 ## Problem
 
 When multiple LLM agents work across repositories, their beliefs diverge. CLAUDE.md files go stale, claims get retracted without dependents being updated, and contradictions survive context compaction. Current LLMs have no mechanism for maintaining consistency across a knowledge base as beliefs change over time.
