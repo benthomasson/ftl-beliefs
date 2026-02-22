@@ -351,6 +351,22 @@ def cmd_init(args):
         print(f"Created {args.nogoods_file}")
 
 
+def cmd_install_skill(args):
+    import shutil
+    skill_source = Path(__file__).parent / "data" / "SKILL.md"
+    if not skill_source.exists():
+        print("Error: SKILL.md not found in package data", file=sys.stderr)
+        sys.exit(1)
+
+    target_dir = args.skill_dir / "beliefs"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / "SKILL.md"
+
+    shutil.copy2(skill_source, target)
+    if not args.quiet:
+        print(f"Installed {target}")
+
+
 def cmd_hash_sources(args):
     from .parser import serialize_registry
 
@@ -477,6 +493,11 @@ def main():
     hash_p = sub.add_parser("hash-sources", help="Backfill source hashes for existing claims")
     hash_p.add_argument("--force", action="store_true", help="Re-hash even if hash already exists")
 
+    # install-skill
+    skill_p = sub.add_parser("install-skill", help="Install Claude Code skill to .claude/skills/beliefs/")
+    skill_p.add_argument("--skill-dir", type=Path, default=Path(".claude/skills"),
+                         help="Target skills directory (default: .claude/skills)")
+
     args = parser.parse_args()
 
     commands = {
@@ -492,5 +513,6 @@ def main():
         "show": cmd_show,
         "update": cmd_update,
         "hash-sources": cmd_hash_sources,
+        "install-skill": cmd_install_skill,
     }
     commands[args.command](args)
