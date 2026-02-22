@@ -69,12 +69,15 @@ def hash_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
-def check_source_hashes(claims: list[Claim], repos: dict[str, str]) -> list[tuple[str, str, str, str]]:
+def check_source_hashes(claims: list[Claim], repos: dict[str, str]) -> tuple[list[tuple[str, str, str, str]], set[str]]:
     """Check IN claims whose source file content has changed since registration.
 
-    Returns list of (claim_id, status, message, source_path).
+    Returns (results, fresh_ids) where:
+    - results: list of (claim_id, status, message, source_path) for changed sources
+    - fresh_ids: set of claim IDs whose source hash is valid and unchanged
     """
     results = []
+    fresh = set()
     for claim in claims:
         if claim.status != "IN":
             continue
@@ -96,8 +99,10 @@ def check_source_hashes(claims: list[Claim], repos: dict[str, str]) -> list[tupl
                 f"Source file changed (was {claim.source_hash}, now {current_hash})",
                 claim.source,
             ))
+        else:
+            fresh.add(claim.id)
 
-    return results
+    return results, fresh
 
 
 def check_stale(claims: list[Claim], repos: dict[str, str]) -> list[tuple[str, str, str, str]]:
@@ -109,16 +114,19 @@ def check_stale(claims: list[Claim], repos: dict[str, str]) -> list[tuple[str, s
     flagged = set()  # One STALE flag per claim (first evidence wins)
 
     # Pass 1: source hash comparison (direct, high confidence)
-    hash_results = check_source_hashes(claims, repos)
+    hash_results, hash_fresh = check_source_hashes(claims, repos)
     for claim_id, status, msg, source in hash_results:
         results.append((claim_id, status, msg, source))
         flagged.add(claim_id)
 
     # Pass 2: keyword + negation heuristic (indirect, lower confidence)
+    # Skip claims verified fresh by source hash — hash is higher confidence than keywords
     for claim in claims:
         if claim.status != "IN":
             continue
         if claim.id in flagged:
+            continue
+        if claim.id in hash_fresh:
             continue
 
         claim_date = parse_date(claim.date)
