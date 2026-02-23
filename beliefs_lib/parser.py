@@ -168,6 +168,8 @@ def update_claim_status(path: Path, claim_id: str, new_status: str, **extra) -> 
 
             # Replace existing metadata lines if extra provides new values
             extra_keys_used = set()
+            text_replaced = False
+            new_text = extra.pop("text", None)
             for line in body_lines:
                 mm = META_RE.match(line)
                 if mm:
@@ -177,6 +179,10 @@ def update_claim_status(path: Path, claim_id: str, new_status: str, **extra) -> 
                         result.append(f"- {display_key}: {extra[existing_key]}")
                         extra_keys_used.add(existing_key)
                         continue
+                elif new_text and not text_replaced and line.strip() and not line.startswith("- "):
+                    result.append(new_text)
+                    text_replaced = True
+                    continue
                 result.append(line)
 
             # Append any extra metadata that didn't replace an existing line

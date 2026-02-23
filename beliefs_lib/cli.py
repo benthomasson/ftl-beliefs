@@ -237,6 +237,8 @@ def cmd_update(args):
         sys.exit(1)
 
     extra = {}
+    if args.text:
+        extra["text"] = args.text
     if args.status:
         pass  # handled by update_claim_status directly
     if args.source:
@@ -482,6 +484,7 @@ def main():
     # update
     update_p = sub.add_parser("update", help="Update an existing claim")
     update_p.add_argument("claim_id", help="Claim ID to update")
+    update_p.add_argument("--text", help="New claim text")
     update_p.add_argument("--status", choices=["IN", "OUT", "STALE"], help="New status")
     update_p.add_argument("--source", help="Set or change source file path")
     update_p.add_argument("--stale-reason", help="Set stale reason")
