@@ -13,7 +13,7 @@ from .parser import (
 from .check_refs import check_refs, resolve_path
 from .check_stale import check_stale, hash_file
 from .resolve import compute_entrenchment, resolve_conflict, classify_source
-from .nogoods_cmd import list_nogoods, filter_nogoods, detail_nogood
+from .nogoods_cmd import list_nogoods, filter_nogoods, detail_nogood, next_nogood_id
 from .compact import compact
 
 
@@ -159,6 +159,30 @@ def cmd_resolve(args):
 
         print(f"Resolution: {winner_id} wins ({winner_score} vs {loser_score})")
         print(f"  -> {loser_id} should be marked STALE")
+
+
+def cmd_add_nogood(args):
+    nogoods = parse_nogoods(args.nogoods_file)
+    new_id = next_nogood_id(nogoods)
+
+    nogood = Nogood(
+        id=new_id,
+        description=args.description,
+        discovered=date.today().isoformat(),
+        discovered_by=args.discovered_by or "",
+        resolution=args.resolution or "",
+        affects=args.affects or [],
+    )
+
+    append_nogood(args.nogoods_file, nogood)
+
+    if not args.quiet:
+        print(f"Added nogood '{new_id}'")
+        print(f"  Description: {nogood.description}")
+        if nogood.resolution:
+            print(f"  Resolution:  {nogood.resolution}")
+        if nogood.affects:
+            print(f"  Affects:     {', '.join(nogood.affects)}")
 
 
 def cmd_nogoods(args):
@@ -464,6 +488,13 @@ def main():
     resolve_p.add_argument("claim_a", help="First claim ID")
     resolve_p.add_argument("claim_b", help="Second claim ID")
 
+    # add-nogood
+    add_ng_p = sub.add_parser("add-nogood", help="Record a standalone nogood (known-bad approach, failed combination)")
+    add_ng_p.add_argument("--description", required=True, help="What doesn't work")
+    add_ng_p.add_argument("--resolution", help="What to do instead")
+    add_ng_p.add_argument("--affects", nargs="*", help="Claim IDs this relates to")
+    add_ng_p.add_argument("--discovered-by", help="Who/what discovered this")
+
     # nogoods
     nogoods_p = sub.add_parser("nogoods", help="List/query the nogoods database")
     nogoods_p.add_argument("--affecting", help="Filter by affected claim ID")
@@ -514,6 +545,7 @@ def main():
         "check-stale": cmd_check_stale,
         "add": cmd_add,
         "resolve": cmd_resolve,
+        "add-nogood": cmd_add_nogood,
         "nogoods": cmd_nogoods,
         "compact": cmd_compact,
         "list": cmd_list,

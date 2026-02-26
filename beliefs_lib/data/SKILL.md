@@ -1,7 +1,7 @@
 ---
 name: beliefs
 description: Manage the belief registry — track claims, detect staleness, resolve conflicts, query contradictions
-argument-hint: "[init|check-refs|check-stale|add|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
+argument-hint: "[init|check-refs|check-stale|add|add-nogood|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
 allowed-tools: Bash(beliefs *), Bash(./beliefs *), Bash(uvx *beliefs*), Read, Grep, Glob
 ---
 
@@ -50,6 +50,30 @@ becomes: `beliefs add --id auth-uses-jwt --text "The auth system now uses JWT to
 
 ### `resolve`
 Run `beliefs resolve CLAIM_A CLAIM_B`. Explain the entrenchment scores and the resolution.
+
+### `add-nogood`
+When you encounter a failure, a known-bad approach, or discover that a combination of things doesn't work, record it:
+
+```bash
+beliefs add-nogood --description "What doesn't work" --resolution "What to do instead"
+```
+
+If the user gives natural language, convert it:
+- Extract the description (what failed / what's incompatible)
+- Extract the resolution (what to do instead), if given
+- List any affected claim IDs with `--affects`
+
+Example: `/beliefs add-nogood Python 3.14 breaks pydantic-core, use 3.13`
+becomes: `beliefs add-nogood --description "Python 3.14 incompatible with pydantic-core" --resolution "Use Python 3.13"`
+
+**Record nogoods when:**
+- An approach was tried and failed
+- A tool/version/config combination is incompatible
+- A workaround was needed due to a limitation
+- A previously-held assumption turned out to be wrong
+- A test, query, or command doesn't behave as expected
+
+Nogoods are append-only. Never delete a nogood. Add resolutions, don't remove entries. The ID is auto-generated (nogood-NNN).
 
 ### `nogoods`
 Run `beliefs nogoods` with any provided flags (e.g., `--affecting CLAIM_ID`). Summarize the results.
