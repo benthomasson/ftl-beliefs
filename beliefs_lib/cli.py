@@ -477,6 +477,10 @@ def main():
     list_p = sub.add_parser("list", help="List all claims (ID and status)")
     list_p.add_argument("--status", choices=["IN", "OUT", "STALE"], help="Filter by status")
 
+    # status — alias for list
+    status_p = sub.add_parser("status", help="List all claims (alias for 'list')")
+    status_p.add_argument("--status", choices=["IN", "OUT", "STALE"], help="Filter by status")
+
     # show
     show_p = sub.add_parser("show", help="Show full detail for one claim")
     show_p.add_argument("claim_id", help="Claim ID to show")
@@ -513,6 +517,7 @@ def main():
         "nogoods": cmd_nogoods,
         "compact": cmd_compact,
         "list": cmd_list,
+        "status": cmd_list,
         "show": cmd_show,
         "update": cmd_update,
         "hash-sources": cmd_hash_sources,
