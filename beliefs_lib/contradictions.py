@@ -172,6 +172,12 @@ def find_contradictions(
     for claim_a, claim_b, score in pairs:
         opposition = _check_opposition(claim_a.text, claim_b.text)
 
+        # Keyword matches without opposition markers are just "similar topic"
+        # — not contradictions. Only embeddings are precise enough to surface
+        # contradictions without opposition language.
+        if method == "keyword" and not opposition:
+            continue
+
         entry = {
             "claim_a": claim_a,
             "claim_b": claim_b,
