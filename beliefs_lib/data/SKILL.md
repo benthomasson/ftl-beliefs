@@ -1,7 +1,7 @@
 ---
 name: beliefs
 description: Manage the belief registry — track claims, detect staleness, resolve conflicts, query contradictions
-argument-hint: "[init|check-refs|check-stale|contradictions|add|add-nogood|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
+argument-hint: "[init|check-refs|check-stale|contradictions|deduplicate|add|add-nogood|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
 allowed-tools: Bash(beliefs *), Bash(./beliefs *), Bash(uvx *beliefs*), Read, Grep, Glob
 ---
 
@@ -106,6 +106,20 @@ beliefs contradictions --verify --model gemini
 ```
 
 If contradictions are found, suggest resolving them with `beliefs resolve` or `beliefs update --status OUT`.
+
+### `deduplicate`
+Run `beliefs deduplicate` to find groups of near-duplicate IN beliefs. Groups by embedding similarity (if fastembed available) or keyword Jaccard overlap. Ranks each group by entrenchment score and suggests which to keep.
+
+```bash
+# Preview duplicate groups
+beliefs deduplicate
+
+# Stricter matching (fewer groups)
+beliefs deduplicate --threshold 0.9
+
+# Actually retire duplicates (sets status=OUT, superseded_by=keeper)
+beliefs deduplicate --apply
+```
 
 ### `hash-sources`
 Run `beliefs hash-sources`. This backfills SHA-256 content hashes for all claims that have a source file but no stored hash. Use `--force` to re-hash claims that already have a hash (e.g., after confirming a source change is expected and re-registering).

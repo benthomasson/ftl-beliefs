@@ -16,6 +16,7 @@ from .resolve import compute_entrenchment, resolve_conflict, classify_source
 from .nogoods_cmd import list_nogoods, filter_nogoods, detail_nogood, next_nogood_id
 from .compact import compact
 from .contradictions import find_contradictions
+from .deduplicate import find_duplicates
 
 
 def default_path(name: str) -> Path:
@@ -126,6 +127,60 @@ def cmd_contradictions(args):
             print(f"Compatible pairs checked: {len(candidates)}")
 
     sys.exit(1 if contradictions else 0)
+
+
+def cmd_deduplicate(args):
+    repos, claims = parse_registry(args.registry)
+    in_claims = [c for c in claims if c.status == "IN"]
+
+    if len(in_claims) < 2:
+        if not args.quiet:
+            print("Need at least 2 IN beliefs to check for duplicates.")
+        sys.exit(0)
+
+    if not args.quiet:
+        print(f"Checking {len(in_claims)} IN beliefs for duplicates...")
+
+    results = find_duplicates(
+        claims,
+        threshold=args.threshold,
+        keyword_threshold=args.keyword_threshold,
+    )
+
+    if not results:
+        if not args.quiet:
+            print("No duplicate groups found.")
+        sys.exit(0)
+
+    total_retire = sum(len(r["retire"]) for r in results)
+    if not args.quiet:
+        print(f"\n{len(results)} duplicate group(s) found ({total_retire} beliefs to retire):\n")
+
+        for i, r in enumerate(results, 1):
+            keep = r["keep"]
+            print(f"  Group {i} ({len(r['group'])} beliefs, method: {r['method']}):")
+            print(f"    KEEP:   {keep.id} — {keep.text}")
+            for c in r["retire"]:
+                print(f"    RETIRE: {c.id} — {c.text}")
+            print()
+
+    if args.apply:
+        applied = 0
+        for r in results:
+            for c in r["retire"]:
+                try:
+                    update_claim_status(
+                        args.registry, c.id,
+                        new_status="OUT",
+                        superseded_by=r["keep"].id,
+                    )
+                    applied += 1
+                except Exception as e:
+                    print(f"  Error retiring {c.id}: {e}", file=sys.stderr)
+        if not args.quiet:
+            print(f"Retired {applied} duplicate belief(s).")
+
+    sys.exit(0)
 
 
 def cmd_add(args):
@@ -617,6 +672,15 @@ def main():
     contra_p.add_argument("--model", default="claude",
                           help="Model for --verify (default: claude)")
 
+    # deduplicate
+    dedup_p = sub.add_parser("deduplicate", help="Find and consolidate duplicate IN beliefs")
+    dedup_p.add_argument("--threshold", type=float, default=0.85,
+                         help="Embedding similarity threshold (default: 0.85)")
+    dedup_p.add_argument("--keyword-threshold", type=float, default=0.5,
+                         help="Keyword Jaccard threshold for fallback (default: 0.5)")
+    dedup_p.add_argument("--apply", action="store_true",
+                         help="Actually retire duplicates (set status=OUT, superseded_by=keeper)")
+
     # add
     add_p = sub.add_parser("add", help="Add a new claim to the registry")
     add_p.add_argument("--id", required=True, help="Claim ID (kebab-case)")
@@ -697,6 +761,7 @@ def main():
         "check-refs": cmd_check_refs,
         "check-stale": cmd_check_stale,
         "contradictions": cmd_contradictions,
+        "deduplicate": cmd_deduplicate,
         "add": cmd_add,
         "resolve": cmd_resolve,
         "add-nogood": cmd_add_nogood,
