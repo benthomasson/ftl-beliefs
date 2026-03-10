@@ -1,7 +1,7 @@
 ---
 name: beliefs
 description: Manage the belief registry — track claims, detect staleness, resolve conflicts, query contradictions
-argument-hint: "[init|check-refs|check-stale|add|add-nogood|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
+argument-hint: "[init|check-refs|check-stale|contradictions|add|add-nogood|resolve|nogoods|compact|list|show|update|hash-sources|install-skill|status] [args...]"
 allowed-tools: Bash(beliefs *), Bash(./beliefs *), Bash(uvx *beliefs*), Read, Grep, Glob
 ---
 
@@ -89,6 +89,23 @@ Run `beliefs update CLAIM_ID` with provided flags. Supports `--status`, `--stale
 
 ### `compact`
 Run `beliefs compact` with any provided flags (e.g., `--budget N`, `--no-truncate`). Output the summary directly.
+
+### `contradictions`
+Run `beliefs contradictions` to find IN beliefs that may contradict each other. Uses embedding similarity if `fastembed` is installed, otherwise falls back to keyword overlap.
+
+```bash
+# Basic scan (keyword or embedding similarity)
+beliefs contradictions
+
+# Lower threshold to catch more pairs
+beliefs contradictions --threshold 0.5
+
+# Verify candidates with LLM judge
+beliefs contradictions --verify
+beliefs contradictions --verify --model gemini
+```
+
+If contradictions are found, suggest resolving them with `beliefs resolve` or `beliefs update --status OUT`.
 
 ### `hash-sources`
 Run `beliefs hash-sources`. This backfills SHA-256 content hashes for all claims that have a source file but no stored hash. Use `--force` to re-hash claims that already have a hash (e.g., after confirming a source change is expected and re-registering).

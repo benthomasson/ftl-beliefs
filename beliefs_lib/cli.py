@@ -15,6 +15,7 @@ from .check_stale import check_stale, hash_file
 from .resolve import compute_entrenchment, resolve_conflict, classify_source
 from .nogoods_cmd import list_nogoods, filter_nogoods, detail_nogood, next_nogood_id
 from .compact import compact
+from .contradictions import find_contradictions
 
 
 def default_path(name: str) -> Path:
@@ -73,6 +74,58 @@ def cmd_check_stale(args):
         print(f"Summary: {', '.join(parts)}")
 
     sys.exit(1 if newly_stale_ids else 0)
+
+
+def cmd_contradictions(args):
+    repos, claims = parse_registry(args.registry)
+    in_claims = [c for c in claims if c.status == "IN"]
+
+    if len(in_claims) < 2:
+        if not args.quiet:
+            print("Need at least 2 IN beliefs to check for contradictions.")
+        sys.exit(0)
+
+    if not args.quiet:
+        print(f"Checking {len(in_claims)} IN beliefs for contradictions...")
+
+    results = find_contradictions(
+        claims,
+        threshold=args.threshold,
+        verify=args.verify,
+        model=args.model,
+    )
+
+    if not results:
+        if not args.quiet:
+            print("No potential contradictions found.")
+        sys.exit(0)
+
+    # Filter to verified contradictions if --verify was used
+    if args.verify:
+        contradictions = [r for r in results if r["verified"]]
+        candidates = [r for r in results if not r["verified"]]
+    else:
+        contradictions = results
+        candidates = []
+
+    if not args.quiet:
+        label = "Contradictions" if args.verify else "Potential contradictions"
+        print(f"\n{label} ({len(contradictions)}):\n")
+        for r in contradictions:
+            a, b = r["claim_a"], r["claim_b"]
+            print(f"  {a.id}  vs  {b.id}  (similarity: {r['score']:.2f}, method: {r['method']})")
+            print(f"    A: {a.text}")
+            print(f"    B: {b.text}")
+            if r["opposition"]:
+                print(f"    Opposition: {', '.join(r['opposition'])}")
+            if r.get("explanation"):
+                print(f"    LLM: {r['explanation']}")
+            print()
+
+        if candidates:
+            print(f"Compatible pairs checked: {len(candidates)}")
+
+    sys.exit(1 if contradictions else 0)
 
 
 def cmd_add(args):
@@ -555,6 +608,15 @@ def main():
     # check-stale
     sub.add_parser("check-stale", help="Detect stale IN claims vs newer entries")
 
+    # contradictions
+    contra_p = sub.add_parser("contradictions", help="Find contradicting IN beliefs")
+    contra_p.add_argument("--threshold", type=float, default=0.7,
+                          help="Similarity threshold for embedding matching (default: 0.7)")
+    contra_p.add_argument("--verify", action="store_true",
+                          help="Use LLM to verify whether similar pairs actually contradict")
+    contra_p.add_argument("--model", default="claude",
+                          help="Model for --verify (default: claude)")
+
     # add
     add_p = sub.add_parser("add", help="Add a new claim to the registry")
     add_p.add_argument("--id", required=True, help="Claim ID (kebab-case)")
@@ -634,6 +696,7 @@ def main():
         "add-repo": cmd_add_repo,
         "check-refs": cmd_check_refs,
         "check-stale": cmd_check_stale,
+        "contradictions": cmd_contradictions,
         "add": cmd_add,
         "resolve": cmd_resolve,
         "add-nogood": cmd_add_nogood,
