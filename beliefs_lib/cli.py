@@ -17,6 +17,7 @@ from .nogoods_cmd import list_nogoods, filter_nogoods, detail_nogood, next_nogoo
 from .compact import compact
 from .contradictions import find_contradictions
 from .deduplicate import find_duplicates
+from .check_circular import find_cycles, find_self_dependencies
 
 
 def default_path(name: str) -> Path:
@@ -75,6 +76,66 @@ def cmd_check_stale(args):
         print(f"Summary: {', '.join(parts)}")
 
     sys.exit(1 if newly_stale_ids else 0)
+
+
+def cmd_check_circular(args):
+    repos, claims = parse_registry(args.registry)
+    in_claims = [c for c in claims if c.status == "IN"]
+
+    if not args.quiet:
+        print(f"Checking {len(in_claims)} IN beliefs for circular dependencies...")
+
+    self_deps = find_self_dependencies(claims)
+    cycles = find_cycles(claims)
+
+    flagged = set()
+
+    if self_deps:
+        if not args.quiet:
+            print(f"\nSelf-dependencies ({len(self_deps)}):\n")
+            for cid in self_deps:
+                print(f"  CIRCULAR {cid} depends on itself")
+        if args.flag:
+            for cid in self_deps:
+                update_claim_status(
+                    args.registry, cid,
+                    new_status="STALE",
+                    stale_reason=f"circular dependency: {cid} depends on itself",
+                )
+                flagged.add(cid)
+
+    if cycles:
+        if not args.quiet:
+            print(f"\nCircular dependency chains ({len(cycles)}):\n")
+            for cycle in cycles:
+                chain = " → ".join(cycle)
+                print(f"  CIRCULAR {chain}")
+        if args.flag:
+            for cycle in cycles:
+                # Flag all claims in the cycle (except the repeated last element)
+                cycle_ids = cycle[:-1]
+                chain = " → ".join(cycle)
+                for cid in cycle_ids:
+                    if cid not in flagged:
+                        update_claim_status(
+                            args.registry, cid,
+                            new_status="STALE",
+                            stale_reason=f"circular dependency: {chain}",
+                        )
+                        flagged.add(cid)
+
+    if not self_deps and not cycles:
+        if not args.quiet:
+            print("No circular dependencies found.")
+        sys.exit(0)
+
+    if not args.quiet:
+        total = len(self_deps) + sum(len(c) - 1 for c in cycles)
+        print(f"\nSummary: {len(self_deps)} self-dependencies, {len(cycles)} cycles, {total} claims involved")
+        if args.flag:
+            print(f"Flagged {len(flagged)} claims as STALE")
+
+    sys.exit(1)
 
 
 def cmd_contradictions(args):
@@ -663,6 +724,11 @@ def main():
     # check-stale
     sub.add_parser("check-stale", help="Detect stale IN claims vs newer entries")
 
+    # check-circular
+    circ_p = sub.add_parser("check-circular", help="Detect circular dependencies in the belief graph")
+    circ_p.add_argument("--flag", action="store_true",
+                        help="Flag circular claims as STALE (default: report only)")
+
     # contradictions
     contra_p = sub.add_parser("contradictions", help="Find contradicting IN beliefs")
     contra_p.add_argument("--threshold", type=float, default=0.7,
@@ -760,6 +826,7 @@ def main():
         "add-repo": cmd_add_repo,
         "check-refs": cmd_check_refs,
         "check-stale": cmd_check_stale,
+        "check-circular": cmd_check_circular,
         "contradictions": cmd_contradictions,
         "deduplicate": cmd_deduplicate,
         "add": cmd_add,
