@@ -1,5 +1,5 @@
 [project]
-name = "beliefs"
+name = "ftl-beliefs"
 version = "0.1.0"
 description = "CLI tool for tracking claims and contradictions across multi-agent LLM systems"
 readme = "README.md"

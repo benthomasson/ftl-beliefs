@@ -5,7 +5,7 @@ A CLI tool for tracking claims and contradictions across multi-agent LLM researc
 ## Quick Start
 
 ```bash
-uv tool install git+https://github.com/benthomasson/beliefs
+pip install ftl-beliefs
 cd ~/git/my-repo
 beliefs install-skill
 claude
@@ -28,16 +28,14 @@ When multiple LLM agents work across repositories, their beliefs diverge. CLAUDE
 No dependencies beyond Python 3.10+ standard library.
 
 ```bash
-# Run directly with uvx (no install needed)
-uvx --from git+https://github.com/benthomasson/beliefs beliefs nogoods
+# Install from PyPI
+pip install ftl-beliefs
 
-# Or install with uv/pip
-uv tool install git+https://github.com/benthomasson/beliefs
-pip install git+https://github.com/benthomasson/beliefs
+# Or with uv
+uv tool install ftl-beliefs
 
-# Or clone and run directly
-git clone https://github.com/benthomasson/beliefs && cd beliefs
-./beliefs nogoods
+# Or run without installing
+uvx ftl-beliefs nogoods
 ```
 
 ## Usage
