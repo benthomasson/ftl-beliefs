@@ -126,6 +126,29 @@ Run `beliefs hash-sources`. This backfills SHA-256 content hashes for all claims
 
 After hashing, `check-stale` will detect when source files change, flagging claims whose source content has diverged from what was recorded at registration time.
 
+## Deprecation Notice
+
+When `ftl-reasons` is installed (`reasons` CLI on PATH), the following `beliefs` commands print a deprecation notice and should be avoided in favor of their `reasons` equivalents:
+
+| Deprecated command | Use instead |
+|---|---|
+| `beliefs add` | `reasons add` |
+| `beliefs add-batch` | `reasons import-beliefs` |
+| `beliefs update` | `reasons retract` / `reasons assert` |
+| `beliefs check-stale` | `reasons check-stale` |
+| `beliefs hash-sources` | `reasons hash-sources` |
+
+These commands still work but `beliefs.md` is now a read-only view generated from `reasons export-markdown`. Use `reasons` as the primary store.
+
+Commands **not** deprecated (no `reasons` equivalent):
+- `beliefs check-refs` — cross-reference verification
+- `beliefs compact` — budget-based context summary
+- `beliefs resolve` — entrenchment scoring for conflict resolution
+- `beliefs contradictions` — embedding/keyword contradiction detection
+- `beliefs deduplicate` — duplicate group detection
+- `beliefs check-circular` — circular dependency detection
+- `beliefs nogoods` / `beliefs add-nogood` — nogood tracking
+
 ## After Any Command
 
 - If claims were flagged STALE or FAIL, suggest concrete next steps

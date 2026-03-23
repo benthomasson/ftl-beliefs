@@ -1,5 +1,6 @@
 """Belief tracker CLI — manage claims and contradictions across repos."""
 
+import shutil
 import sys
 import argparse
 from datetime import date
@@ -22,6 +23,32 @@ from .check_circular import find_cycles, find_self_dependencies
 
 def default_path(name: str) -> Path:
     return Path.cwd() / name
+
+
+# Commands replaced by ftl-reasons equivalents.
+# Only shown when `reasons` CLI is installed.
+_DEPRECATED_COMMANDS = {
+    "add": "reasons add",
+    "add-batch": "reasons import-beliefs",
+    "update": "reasons retract / reasons assert",
+    "check-stale": "reasons check-stale",
+    "hash-sources": "reasons hash-sources",
+}
+
+
+def _reasons_deprecation_notice(command: str) -> None:
+    """Print a deprecation notice if `reasons` CLI is installed."""
+    if command not in _DEPRECATED_COMMANDS:
+        return
+    if shutil.which("reasons") is None:
+        return
+    replacement = _DEPRECATED_COMMANDS[command]
+    print(
+        f"Notice: `beliefs {command}` is deprecated in favor of `{replacement}` "
+        f"(ftl-reasons). beliefs.md is now a read-only view — use reasons as "
+        f"the primary store.",
+        file=sys.stderr,
+    )
 
 
 def cmd_check_refs(args):
@@ -842,4 +869,6 @@ def main():
         "hash-sources": cmd_hash_sources,
         "install-skill": cmd_install_skill,
     }
+    if not args.quiet:
+        _reasons_deprecation_notice(args.command)
     commands[args.command](args)
