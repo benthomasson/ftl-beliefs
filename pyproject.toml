@@ -1,6 +1,6 @@
 [project]
 name = "ftl-beliefs"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI tool for tracking claims and contradictions across multi-agent LLM systems"
 readme = "README.md"
 requires-python = ">=3.10"
