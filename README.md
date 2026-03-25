@@ -1,6 +1,14 @@
 # beliefs
 
-A CLI tool for tracking claims and contradictions across multi-agent LLM research systems.
+Structured knowledge base for LLM agents. Tracks claims with provenance, detects staleness, records contradictions, and provides the foundation for deep code analysis when combined with [code-expert](https://github.com/benthomasson/code-expert) and [reasons](https://github.com/benthomasson/ftl-reasons) (RMS).
+
+## What it enables
+
+On its own, `beliefs` gives agents a persistent, queryable knowledge base with source hashes, staleness detection, and contradiction tracking. Combined with code-expert and an RMS, it enables something more powerful: **systematic architectural analysis that finds issues code review misses.**
+
+In one session on a 15k-line infrastructure framework, this pipeline explored 152 code topics, extracted 785 beliefs, derived logical consequences across the belief network, and surfaced architectural issues — disabled SSH host key verification, command injection vectors, a dormant policy engine — that led to 8 merged PRs and 8 closed GitHub issues. These weren't bugs in diffs. They were design-level gaps with no single commit that introduced them.
+
+The belief registry is the structured layer that makes this possible. Individual observations ("known_hosts=None") become tracked facts. Facts connect via dependencies. Dependencies enable derivation. Derivation surfaces contradictions. Contradictions become actionable issues.
 
 ## Quick Start
 
@@ -19,7 +27,7 @@ Then inside Claude Code:
 
 ## Problem
 
-When multiple LLM agents work across repositories, their beliefs diverge. CLAUDE.md files go stale, claims get retracted without dependents being updated, and contradictions survive context compaction. Current LLMs have no mechanism for maintaining consistency across a knowledge base as beliefs change over time.
+LLM agents have no persistent memory structure. CLAUDE.md files go stale, claims get retracted without dependents being updated, and contradictions survive context compaction. Agents cannot distinguish between a belief formed yesterday and one formed six months ago, or tell that a later finding supersedes an earlier one.
 
 `beliefs` is a practical approximation of classical truth maintenance (ATMS, AGM) adapted for markdown-based agent workflows. It tracks what you believe, where each belief comes from, and what depends on what — so when something changes, you know what else must change.
 
@@ -116,11 +124,28 @@ beliefs compact --budget 500
 
 ## Design Choices
 
-- **Markdown, not YAML/JSON.** The registry is useful without the CLI — an LLM or human can read `beliefs.md` directly.
+- **Markdown, not YAML/JSON.** The registry is useful without the CLI — an LLM or human can read `beliefs.md` directly. Ablation experiments (6 versions) show that grep over beliefs.md outperforms structured database lookup by 6-11pp for Sonnet — the flat format provides contextual clustering that isolated records lack.
 - **Keyword heuristics, not NLP.** Staleness detection uses keyword overlap and negation patterns. Crude but independent of the system being verified.
-- **STALE, not auto-retract.** The tool flags problems for human review. It never changes IN to OUT automatically.
+- **STALE, not auto-retract.** The tool flags problems for human review. It never changes IN to OUT automatically. For automatic retraction cascades, pair with [reasons](https://github.com/benthomasson/ftl-reasons) (RMS).
 - **Nogoods are append-only.** Contradictions survive context compaction and session boundaries.
 - **Zero dependencies.** Python 3.10+ standard library only. No LLM calls, no database, no server.
+
+## Ecosystem
+
+`beliefs` is one layer in a stack for structured AI reasoning:
+
+| Tool | Role | Repo |
+|------|------|------|
+| **beliefs** | Structured knowledge base with provenance and staleness detection | [beliefs](https://github.com/benthomasson/beliefs) |
+| **reasons** (RMS) | Dependency-directed truth maintenance with automatic retraction cascades | [ftl-reasons](https://github.com/benthomasson/ftl-reasons) |
+| **code-expert** | Deep code analysis — scan, explore, extract beliefs, derive, file issues | [code-expert](https://github.com/benthomasson/code-expert) |
+| **entry** | Chronological documentation with filesystem-encoded timestamps | [entry](https://github.com/benthomasson/entry) |
+
+**Standalone:** `beliefs` works on its own for any project that needs persistent claim tracking with staleness detection.
+
+**With RMS:** `reasons` adds automatic retraction cascades — retract one belief and all dependents update. Use `reasons export-markdown` to regenerate beliefs.md from the RMS database.
+
+**With code-expert:** The full pipeline: scan a codebase → explore topics → extract beliefs → derive logical consequences → file GitHub issues from OUT gated beliefs. This is where architectural analysis happens.
 
 ## Claude Code Skill
 
@@ -144,7 +169,9 @@ beliefs install-skill --skill-dir .claude/custom-skills
 
 ## Origin
 
-Built as a proof-of-concept during a meta-research study on using AI for open-ended research. The study found that multi-agent LLM systems suffer from belief staleness, circular verification, and cross-repository knowledge gaps — the same problems classical AI addressed with truth maintenance systems in the 1980s. This tool bridges those two worlds.
+Built during a research program investigating whether structured belief tracking improves LLM agent performance. The program found that multi-agent LLM systems suffer from belief staleness, circular verification, and cross-repository knowledge gaps — the same problems classical AI addressed with truth maintenance systems in the 1980s. This tool bridges those two worlds.
+
+Production knowledge bases built with this tool include 785 beliefs (ftl2-expert, infrastructure automation) and 440 beliefs (agents-python-expert, AI orchestration framework), with findings that led to merged PRs, closed issues, and retracted security vulnerabilities.
 
 ## References
 
